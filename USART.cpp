@@ -8,6 +8,7 @@
 #include "USART.h"
 #include <avr/io.h>
 #include <string.h>
+#include "math.h"
 
 USART::USART(){
 	usart_port = NULL;
@@ -29,8 +30,9 @@ USART::USART(USART_Data * usart_data, bool interrupt_en) {
 	port->DIRCLR = rxPin;
 
 	usart_port->BAUDCTRLB = 0; //Just to be sure that BSCALE is 0
-	float CTRLA_Calc = (F_CPU / (16 * usart_data->baudRate));
-	usart_port->BAUDCTRLA = 0xCF;
+	float CTRLA_Calc = floor(F_CPU / (16 * usart_data->baudRate));
+	usart_port->BAUDCTRLA = 0xCF; //default for 32MHz clock, 9600 baud
+	//usart_port->BAUDCTRLA = (int)CTRLA_Calc;
 
 	// Enable serial interrupts if decided so
 	if(interrupt_en){

@@ -10,9 +10,12 @@
 #include <stdio.h>
 #include "USART.h"
 #include "USART_Debug.h"
+#include "GPS_Parser.h"
 
 USART_Data uc0;
 USART C0;
+USART_Data gdata;
+GPS_Parser gps;
 
 void initClocks(){
 	OSC.CTRL |= OSC_RC32MEN_bm | OSC_RC32KEN_bm;  /* Enable the internal 32MHz & 32KHz oscillators */
@@ -30,8 +33,8 @@ void restartInterrupts(){
 	sei();
 }
 
-void setupUSARTC0(){
-	uc0 = {};
+void setupUSARTDevices(){
+	//uc0 = {};
 	uc0.port = &PORTC;
 	uc0.usart_port = &USARTC0;
 	uc0.txPin = PIN3_bm;
@@ -39,6 +42,15 @@ void setupUSARTC0(){
 	uc0.baudRate = 9600;
 	
 	C0 = USART(&uc0, false);
+
+	gdata.port = &PORTE;
+	gdata.usart_port = &USARTE0;
+	gdata.txPin = PIN3_bm;
+	gdata.rxPin = PIN2_bm;
+	gdata.baudRate = 9600;
+
+	gps = GPS_Parser(&gdata);
+
 }
 
 
@@ -46,16 +58,17 @@ int main(void)
 {
 	initClocks();
 	restartInterrupts();
-	setupUSARTC0();
+	setupUSARTDevices();
 	setDebugOutputPort(&USARTC0);
 	
-	printf("Hello World!");
+	printf("Hello World!\n");
 	
 	
     /* Replace with your application code */
     while (1) 
     {
+    	gps.readNMEA();
 		__asm volatile("nop");
     }
+    return 0;
 }
-
