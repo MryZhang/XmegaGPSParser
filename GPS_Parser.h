@@ -16,13 +16,19 @@
 
 class GPS_Parser : public USART{
 private:
-	bool time_avail;
-	bool fix_avail;
+	bool time_avail, fix_avail;
 	struct tm time_struct;
 	uint8_t hour, minute, seconds, year, month, day;
 	uint16_t milliseconds;
+	int32_t latitude_fixed, longitude_fixed;
+	float latitude, longitude;
+	float latitudeDegrees, longitudeDegrees;
+	char lat, lon, mag;
+	uint8_t fixquality, satellites;
+	float speed, angle, magvariation, HDOP;
+	float geoidheight, altitude;
 
-
+	uint8_t parseHex(char c);
 
 public:
 	GPS_Parser();
@@ -32,6 +38,8 @@ public:
 
 	void praseRMC();
 	void parseGGA();
+	bool parseGPGGA(char * message);
+	bool parseGPRMC(char * message);
 
 	bool timeAvailable();
 	bool fixAvailable();
