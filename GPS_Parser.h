@@ -27,6 +27,8 @@ private:
 	uint8_t fixquality, satellites;
 	float speed, angle, magvariation, HDOP;
 	float geoidheight, altitude;
+	float lastLatitudeDegrees, lastLongitudeDegrees;
+	bool newLatitudeDegrees, newLongitudeDegrees;
 
 	uint8_t parseHex(char c);
 
@@ -44,8 +46,9 @@ public:
 	bool timeAvailable();
 	bool fixAvailable();
 
-	double getLatitude();
-	double getLongitude();
+	float getLatitude();
+	float getLongitude();
+	bool newPositionAvailable();
 	struct tm  * getTime_struct();
 	unsigned int getMinute();
 	unsigned int getHour();

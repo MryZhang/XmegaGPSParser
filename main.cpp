@@ -67,7 +67,19 @@ int main(void)
     while (1) 
     {
     	gps.readNMEA();
-		__asm volatile("nop");
+    	if(gps.fixAvailable()){
+    		//printf("Fix available. \n");
+    		if(gps.newPositionAvailable()){
+    			printf("New pos: \n");
+    			float latitude = gps.getLatitude();
+    			float longitude = gps.getLongitude();
+    			printf("Position: %f, %f\n", latitude, longitude);
+    		}
+
+    	} else {
+    		printf("Waiting for a fix..\n");
+    	}
+		//__asm volatile("nop");
     }
     return 0;
 }

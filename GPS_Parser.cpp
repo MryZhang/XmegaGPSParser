@@ -15,9 +15,10 @@ GPS_Parser::GPS_Parser() : USART(){
 	fix_avail = false;
 	hour = minute = seconds = year = month = day = 0;
 	milliseconds = 0;
-	latitude_fixed =longitude_fixed = 0;
+	latitude_fixed = longitude_fixed = 0;
 	latitude = longitude = 0.0f;
 	latitudeDegrees = longitudeDegrees = 0.0f;
+	lastLatitudeDegrees = lastLongitudeDegrees = 0.0f;
 	lat = lon = mag = 0;
 	fixquality = satellites = 0;
 	speed = angle = magvariation = HDOP = 0.0f;
@@ -30,9 +31,10 @@ GPS_Parser::GPS_Parser(USART_Data * data) : USART(data, false){
 	time_avail = false;
 	hour = minute = seconds = year = month = day = 0;
 	milliseconds = 0;
-	latitude_fixed =longitude_fixed = 0;
+	latitude_fixed = longitude_fixed = 0;
 	latitude = longitude = 0.0f;
 	latitudeDegrees = longitudeDegrees = 0.0f;
+	lastLatitudeDegrees = lastLongitudeDegrees = 0.0f;
 	lat = lon = mag = 0;
 	fixquality = satellites = 0;
 	speed = angle = magvariation = HDOP = 0.0f;
@@ -65,7 +67,7 @@ bool GPS_Parser::parseGPGGA(char * message){
 	seconds = (time % 100);
 
 	milliseconds = fmod(timef, 1.0) * 1000;
-	printf("Time: %d:%d:%d\n", hour, minute, seconds);
+	//printf("Time: %d:%d:%d\n", hour, minute, seconds);
 
 	// parse out latitude
 	p = strchr(p, ',')+1;
@@ -130,6 +132,7 @@ bool GPS_Parser::parseGPGGA(char * message){
 	{
 		fixquality = atoi(p);
 	}
+	fix_avail = fixquality > 0 ? true : false;
 
 	p = strchr(p, ',')+1;
 	if (',' != *p)
@@ -271,10 +274,23 @@ void parseGPRMA(){
 
 }
 
+float GPS_Parser::getLatitude(){
+	return latitudeDegrees;
+}
+
+float GPS_Parser::getLongitude(){
+	return longitudeDegrees;
+}
+
+bool GPS_Parser::newPositionAvailable(){
+	return newLatitudeDegrees | newLongitudeDegrees;
+}
+
 bool GPS_Parser::readNMEA(){
-	char buffer[127];
+	char buffer[255];
 	char c;
 	unsigned int bufPos = 0;
+	newLatitudeDegrees = newLongitudeDegrees = false;
 
 	while(1){
 		c = this->GetChar();
@@ -290,57 +306,48 @@ bool GPS_Parser::readNMEA(){
 			}
 			if (sum != 0) {
 				// bad checksum :(
-				printf("Invalid packet.\n");
+				//printf("Invalid packet.\n");
 				return false;
 			} else {
-				printf("A valid NMEA message!\n");
+				//printf("A valid NMEA message!\n");
 				const char * type;
 				if(strstr(buffer, "$GPGGA")){
 					// Code snippets borrowed from https://github.com/adafruit/Adafruit-GPS-Library/blob/master/Adafruit_GPS.cpp
 					// Why re-invent what's already been invented..
 					type = "GPGGA";
 					if(parseGPGGA(buffer)){
-						printf("GPGGA message successfully parsed.\n");
-						printf("Time: %d:%d:%d\n", hour, minute, seconds);
-						printf("Lat %f Lon %f\n", latitudeDegrees, longitudeDegrees);
-						if(fixquality == 1){
-							printf("Got a fix!\n");
-						}
-						printf("Fix Quality: %d\n", fixquality);
+						newLatitudeDegrees = (latitudeDegrees != lastLatitudeDegrees) ? true : false;
+						lastLatitudeDegrees = latitudeDegrees;
+						newLongitudeDegrees = (longitudeDegrees != lastLongitudeDegrees) ? true : false;
+						lastLongitudeDegrees = longitudeDegrees;
+						//printf("new lat %b new lon \n", newLatitudeDegrees, newLongitudeDegrees);
 					} else {
 						printf("Error parsing GPGGA message.");
 					}
 				} else if (strstr(buffer, "$GPRMA")){
 					type = "GPRMA";
+					printf("Received a GPRMA message\n");
 				} else if (strstr(buffer, "$GPRMC")){
 					type = "GPRMC";
 					if(parseGPRMC(buffer)){
-						printf("GPRMC message successfully parsed.");
+						//printf("GPRMC message successfully parsed.\n");
 					} else {
-						printf("Error parsing GPRMC message.");
+						printf("Error parsing GPRMC message.\n");
 					}
 				} else {
 					type = "other";
+					//TODO: figure out what kind of message type
+					//printf("Some other kind of NMEA message\n");
 				}
-				//char type[7];
-				//memcpy(type, buffer, 7);
-				//type[6] = '\0';
-
-				printf("Type: %s\n", type);
+				//printf("Type: %s\n", type);
 
 				const char * endPtr = strstr(buffer, "*");
 				uint8_t msg_len = bufPos-4;
 				char message[msg_len];
-				//printf("Message length: ")
-				if(fixquality > 0){
-					printf("Fix available!\n");
-					break;
-				} else {
-					printf("Fix not avaliable\n");
+				if(fixquality < 1){
+					memcpy(message, buffer, msg_len);
+					printf("No fix, Message: %s\n", message);
 				}
-				memcpy(message, buffer, msg_len);
-				printf("Message: %s\n", message);
-				//printf("Original msg: %s\n", buffer);
 				break;
 			}
 
