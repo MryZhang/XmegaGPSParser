@@ -53,7 +53,6 @@ void setupUSARTDevices(){
 
 }
 
-
 int main(void)
 {
 	initClocks();
@@ -61,7 +60,7 @@ int main(void)
 	setupUSARTDevices();
 	setDebugOutputPort(&USARTC0);
 	
-	printf("Hello World!\n");
+	printf("GPS Parser Program Starting\n");
 	
 	
     /* Replace with your application code */

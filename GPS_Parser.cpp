@@ -272,7 +272,7 @@ void parseGPRMA(){
 }
 
 bool GPS_Parser::readNMEA(){
-	char buffer[255];
+	char buffer[127];
 	char c;
 	unsigned int bufPos = 0;
 
@@ -303,6 +303,9 @@ bool GPS_Parser::readNMEA(){
 						printf("GPGGA message successfully parsed.\n");
 						printf("Time: %d:%d:%d\n", hour, minute, seconds);
 						printf("Lat %f Lon %f\n", latitudeDegrees, longitudeDegrees);
+						if(fixquality == 1){
+							printf("Got a fix!\n");
+						}
 						printf("Fix Quality: %d\n", fixquality);
 					} else {
 						printf("Error parsing GPGGA message.");
@@ -324,10 +327,17 @@ bool GPS_Parser::readNMEA(){
 				//type[6] = '\0';
 
 				printf("Type: %s\n", type);
-				char message[32];
+
 				const char * endPtr = strstr(buffer, "*");
 				uint8_t msg_len = bufPos-4;
+				char message[msg_len];
 				//printf("Message length: ")
+				if(fixquality > 0){
+					printf("Fix available!\n");
+					break;
+				} else {
+					printf("Fix not avaliable\n");
+				}
 				memcpy(message, buffer, msg_len);
 				printf("Message: %s\n", message);
 				//printf("Original msg: %s\n", buffer);
@@ -335,25 +345,7 @@ bool GPS_Parser::readNMEA(){
 			}
 
 		}
-		/*if(c == 0x0A || c == 0 || bufPos > 255){
-			break;
-		}*/
 	}
-	/*
-	if(bufPos > 3){
-		printf("00: %c\n", buffer[bufPos]);
-		printf("-1: %c\n", buffer[bufPos-1]);
-		printf("-2: %c\n", buffer[bufPos-2]);
-		printf("-3: %c\n", buffer[bufPos-3]);
-		printf("-4: %c\n", buffer[bufPos-4]);
-		if(buffer[bufPos-4] == '*'){
-			printf("A NMEA message!\n");
-			char type[7];
-			memcpy(type, buffer, 7);
-			type[6] = '\0';
-			printf(type);
-		}
-	} */
 
 	return false;
 
