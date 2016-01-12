@@ -50,7 +50,6 @@ void setupUSARTDevices(){
 	gdata.baudRate = 9600;
 
 	gps = GPS_Parser(&gdata);
-
 }
 
 int main(void)
@@ -62,15 +61,11 @@ int main(void)
 	
 	printf("GPS Parser Program Starting\n");
 	
-	
-    /* Replace with your application code */
     while (1) 
     {
     	gps.readNMEA();
     	if(gps.fixAvailable()){
-    		//printf("Fix available. \n");
     		if(gps.newPositionAvailable()){
-    			printf("New pos: \n");
     			float latitude = gps.getLatitude();
     			float longitude = gps.getLongitude();
     			printf("Position: %f, %f\n", latitude, longitude);
@@ -79,7 +74,6 @@ int main(void)
     	} else {
     		printf("Waiting for a fix..\n");
     	}
-		//__asm volatile("nop");
     }
     return 0;
 }

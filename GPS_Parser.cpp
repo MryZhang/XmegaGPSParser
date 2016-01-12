@@ -26,7 +26,6 @@ GPS_Parser::GPS_Parser() : USART(){
 };
 
 GPS_Parser::GPS_Parser(USART_Data * data) : USART(data, false){
-	//USART(data, false);
 	fix_avail = false;
 	time_avail = false;
 	hour = minute = seconds = year = month = day = 0;
@@ -86,6 +85,10 @@ bool GPS_Parser::parseGPGGA(char * message){
 		latitude = degree / 100000 + minutes * 0.000006F;
 		latitudeDegrees = (latitude-100*int(latitude/100))/60.0;
 		latitudeDegrees += int(latitude/100);
+
+		// Get new latitude
+		newLatitudeDegrees = (latitudeDegrees != lastLatitudeDegrees) ? true : false;
+		lastLatitudeDegrees = latitudeDegrees;
 	}
 
 	p = strchr(p, ',')+1;
@@ -115,6 +118,10 @@ bool GPS_Parser::parseGPGGA(char * message){
 		longitude = degree / 100000 + minutes * 0.000006F;
 		longitudeDegrees = (longitude-100*int(longitude/100))/60.0;
 		longitudeDegrees += int(longitude/100);
+
+		// Get new longitude
+		newLongitudeDegrees = (longitudeDegrees != lastLongitudeDegrees) ? true : false;
+		lastLongitudeDegrees = longitudeDegrees;
 	}
 
 	p = strchr(p, ',')+1;
@@ -204,6 +211,10 @@ bool GPS_Parser::parseGPRMC(char * message){
 		latitude = degree / 100000 + minutes * 0.000006F;
 		latitudeDegrees = (latitude-100*int(latitude/100))/60.0;
 		latitudeDegrees += int(latitude/100);
+
+		// Get new latitude
+		newLatitudeDegrees = (latitudeDegrees != lastLatitudeDegrees) ? true : false;
+		lastLatitudeDegrees = latitudeDegrees;
 	}
 
 	p = strchr(p, ',')+1;
@@ -233,6 +244,10 @@ bool GPS_Parser::parseGPRMC(char * message){
 		longitude = degree / 100000 + minutes * 0.000006F;
 		longitudeDegrees = (longitude-100*int(longitude/100))/60.0;
 		longitudeDegrees += int(longitude/100);
+
+		// Get new longitude
+		newLongitudeDegrees = (longitudeDegrees != lastLongitudeDegrees) ? true : false;
+		lastLongitudeDegrees = longitudeDegrees;
 	}
 
 	p = strchr(p, ',')+1;
@@ -306,22 +321,14 @@ bool GPS_Parser::readNMEA(){
 			}
 			if (sum != 0) {
 				// bad checksum :(
-				//printf("Invalid packet.\n");
 				return false;
 			} else {
-				//printf("A valid NMEA message!\n");
 				const char * type;
 				if(strstr(buffer, "$GPGGA")){
 					// Code snippets borrowed from https://github.com/adafruit/Adafruit-GPS-Library/blob/master/Adafruit_GPS.cpp
 					// Why re-invent what's already been invented..
 					type = "GPGGA";
-					if(parseGPGGA(buffer)){
-						newLatitudeDegrees = (latitudeDegrees != lastLatitudeDegrees) ? true : false;
-						lastLatitudeDegrees = latitudeDegrees;
-						newLongitudeDegrees = (longitudeDegrees != lastLongitudeDegrees) ? true : false;
-						lastLongitudeDegrees = longitudeDegrees;
-						//printf("new lat %b new lon \n", newLatitudeDegrees, newLongitudeDegrees);
-					} else {
+					if(!parseGPGGA(buffer)){
 						printf("Error parsing GPGGA message.");
 					}
 				} else if (strstr(buffer, "$GPRMA")){
@@ -329,16 +336,14 @@ bool GPS_Parser::readNMEA(){
 					printf("Received a GPRMA message\n");
 				} else if (strstr(buffer, "$GPRMC")){
 					type = "GPRMC";
-					if(parseGPRMC(buffer)){
-						//printf("GPRMC message successfully parsed.\n");
-					} else {
+					if(!parseGPRMC(buffer)){
 						printf("Error parsing GPRMC message.\n");
 					}
 				} else {
 					type = "other";
-					char othertype[8];
-					memcpy(othertype, buffer, sizeof(char) * 7);
-					printf("Other type: %s\n", othertype);
+					char othertype[6];
+					memcpy(othertype, buffer+2, sizeof(char) * 5);
+					//printf("Other type: %s\n", othertype);
 					//TODO: figure out what kind of message type
 					//printf("Some other kind of NMEA message\n");
 				}
