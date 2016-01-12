@@ -336,6 +336,9 @@ bool GPS_Parser::readNMEA(){
 					}
 				} else {
 					type = "other";
+					char othertype[8];
+					memcpy(othertype, buffer, sizeof(char) * 7);
+					printf("Other type: %s\n", othertype);
 					//TODO: figure out what kind of message type
 					//printf("Some other kind of NMEA message\n");
 				}
