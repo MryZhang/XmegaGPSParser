@@ -19,6 +19,7 @@ GPS_Parser::GPS_Parser() : USART(){
 	latitude = longitude = 0.0f;
 	latitudeDegrees = longitudeDegrees = 0.0f;
 	lastLatitudeDegrees = lastLongitudeDegrees = 0.0f;
+	newLatitudeDegrees = newLongitudeDegrees = false;
 	lat = lon = mag = 0;
 	fixquality = satellites = 0;
 	speed = angle = magvariation = HDOP = 0.0f;
@@ -34,10 +35,26 @@ GPS_Parser::GPS_Parser(USART_Data * data) : USART(data, false){
 	latitude = longitude = 0.0f;
 	latitudeDegrees = longitudeDegrees = 0.0f;
 	lastLatitudeDegrees = lastLongitudeDegrees = 0.0f;
+	newLatitudeDegrees = newLongitudeDegrees = false;
 	lat = lon = mag = 0;
 	fixquality = satellites = 0;
 	speed = angle = magvariation = HDOP = 0.0f;
 	geoidheight = altitude = 0.0f;
+}
+
+bool GPS_Parser::timeAvailable(){
+	return time_avail;
+}
+
+struct tm * GPS_Parser::getTimeStruct(){
+	time_t tmp_time;
+	time(&tmp_time);
+	struct tm * gps_time;
+	gps_time = localtime(&tmp_time);
+	gps_time->tm_hour = hour;
+	gps_time->tm_min = minute;
+	gps_time->tm_sec = seconds;
+	return gps_time;
 }
 
 uint8_t GPS_Parser::parseHex(char c){
@@ -66,7 +83,8 @@ bool GPS_Parser::parseGPGGA(char * message){
 	seconds = (time % 100);
 
 	milliseconds = fmod(timef, 1.0) * 1000;
-	//printf("Time: %d:%d:%d\n", hour, minute, seconds);
+	time_avail = true;
+	printf("Time: %d:%d:%d\n", hour, minute, seconds);
 
 	// parse out latitude
 	p = strchr(p, ',')+1;
@@ -306,6 +324,7 @@ bool GPS_Parser::readNMEA(){
 	char c;
 	unsigned int bufPos = 0;
 	newLatitudeDegrees = newLongitudeDegrees = false;
+	time_avail = false;
 
 	while(1){
 		c = this->GetChar();
@@ -349,16 +368,16 @@ bool GPS_Parser::readNMEA(){
 				}
 				//printf("Type: %s\n", type);
 
-				const char * endPtr = strstr(buffer, "*");
+				//const char * endPtr = strstr(buffer, "*");
 				uint8_t msg_len = bufPos-4;
 				char message[msg_len];
 				if(fixquality < 1){
 					memcpy(message, buffer, msg_len);
-					printf("No fix, Message: %s\n", message);
+					message[msg_len - 1] = '\0';// terminating character
+					printf("No fix, Message: %s\n", message, msg_len);
 				}
 				break;
 			}
-
 		}
 	}
 

@@ -49,7 +49,7 @@ public:
 	float getLatitude();
 	float getLongitude();
 	bool newPositionAvailable();
-	struct tm  * getTime_struct();
+	struct tm  * getTimeStruct();
 	unsigned int getMinute();
 	unsigned int getHour();
 	unsigned int geteDOM();

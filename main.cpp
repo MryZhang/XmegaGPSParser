@@ -74,6 +74,10 @@ int main(void)
     	} else {
     		printf("Waiting for a fix..\n");
     	}
+    	if(gps.timeAvailable()){
+    		struct tm * gps_time = gps.getTimeStruct();
+    		printf("Time: %02d:%02d:%02d\n", gps_time->tm_hour, gps_time->tm_min, gps_time->tm_sec);
+    	}
     }
     return 0;
 }
